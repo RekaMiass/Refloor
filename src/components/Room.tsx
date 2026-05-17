@@ -1,11 +1,11 @@
-import * as THREE from 'three';
-import type { RoomParams, PlankParams } from '../types';
-import Floor from './Floor';
+import * as THREE from "three";
+import type { RoomParams, PlankParams } from "../types";
+import Floor from "./Floor";
 
 interface RoomProps {
   room: RoomParams;
   plank: PlankParams;
-  layoutType: 'herringbone' | 'straight';
+  layoutType: "herringbone" | "straight";
   wallColor: string;
 }
 
@@ -25,7 +25,11 @@ function WallPanel({
   return (
     <mesh position={position} rotation={rotation} receiveShadow>
       <planeGeometry args={[width, height]} />
-      <meshStandardMaterial color={color} side={THREE.FrontSide} roughness={0.9} />
+      <meshStandardMaterial
+        color={color}
+        side={THREE.FrontSide}
+        roughness={0.9}
+      />
     </mesh>
   );
 }
@@ -49,19 +53,39 @@ function Skirting({
     rotation?: [number, number, number];
   }> = [
     // Front wall
-    { args: [roomLength, skirtH, skirtD], position: [0, y, roomWidth / 2 - skirtD / 2] },
+    {
+      args: [roomLength, skirtH, skirtD],
+      position: [0, y, roomWidth / 2 - skirtD / 2],
+    },
     // Back wall
-    { args: [roomLength, skirtH, skirtD], position: [0, y, -roomWidth / 2 + skirtD / 2] },
+    {
+      args: [roomLength, skirtH, skirtD],
+      position: [0, y, -roomWidth / 2 + skirtD / 2],
+    },
     // Left wall
-    { args: [roomWidth - skirtD * 2, skirtH, skirtD], position: [-roomLength / 2 + skirtD / 2, y, 0], rotation: [0, Math.PI / 2, 0] },
+    {
+      args: [roomWidth - skirtD * 2, skirtH, skirtD],
+      position: [-roomLength / 2 + skirtD / 2, y, 0],
+      rotation: [0, Math.PI / 2, 0],
+    },
     // Right wall
-    { args: [roomWidth - skirtD * 2, skirtH, skirtD], position: [roomLength / 2 - skirtD / 2, y, 0], rotation: [0, Math.PI / 2, 0] },
+    {
+      args: [roomWidth - skirtD * 2, skirtH, skirtD],
+      position: [roomLength / 2 - skirtD / 2, y, 0],
+      rotation: [0, Math.PI / 2, 0],
+    },
   ];
 
   return (
     <>
       {segments.map((s, i) => (
-        <mesh key={i} position={s.position} rotation={s.rotation} castShadow receiveShadow>
+        <mesh
+          key={i}
+          position={s.position}
+          rotation={s.rotation}
+          castShadow
+          receiveShadow
+        >
           <boxGeometry args={s.args} />
           <meshStandardMaterial color={color} roughness={0.5} />
         </mesh>
@@ -70,7 +94,12 @@ function Skirting({
   );
 }
 
-export default function Room({ room, plank, layoutType, wallColor }: RoomProps) {
+export default function Room({
+  room,
+  plank,
+  layoutType,
+  wallColor,
+}: RoomProps) {
   const { length: L, width: W, height: H } = room;
   const colorStr = wallColor;
 
@@ -93,7 +122,11 @@ export default function Room({ room, plank, layoutType, wallColor }: RoomProps) 
       {/* Ceiling */}
       <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, H, 0]}>
         <planeGeometry args={[L, W]} />
-        <meshStandardMaterial color="#f5f5f0" roughness={1} side={THREE.BackSide} />
+        <meshStandardMaterial
+          color="#f5f5f0"
+          roughness={1}
+          side={THREE.BackSide}
+        />
       </mesh>
 
       {/* Walls */}

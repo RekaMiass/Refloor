@@ -1,16 +1,18 @@
-import { useMemo, useEffect } from 'react';
-import { useThree } from '@react-three/fiber';
-import * as THREE from 'three';
-import type { PlankParams } from '../types';
+import { useMemo, useEffect } from "react";
+import { useThree } from "@react-three/fiber";
+import * as THREE from "three";
+import type { PlankParams } from "../types";
 
 interface FloorProps {
   roomLength: number;
   roomWidth: number;
   plank: PlankParams;
-  layoutType: 'herringbone' | 'straight';
+  layoutType: "herringbone" | "straight";
 }
 
-const WOOD_COLORS = [0xc8a070, 0xc09a65, 0xd4a878, 0xb8905e, 0xcc9e6a, 0xba8c5a];
+const WOOD_COLORS = [
+  0xc8a070, 0xc09a65, 0xd4a878, 0xb8905e, 0xcc9e6a, 0xba8c5a,
+];
 function woodColor(idx: number): THREE.Color {
   return new THREE.Color(WOOD_COLORS[idx % WOOD_COLORS.length]);
 }
@@ -24,7 +26,9 @@ function makeClippingPlanes(roomL: number, roomW: number): THREE.Plane[] {
   ];
 }
 
-function makeMaterial(clippingPlanes: THREE.Plane[]): THREE.MeshStandardMaterial {
+function makeMaterial(
+  clippingPlanes: THREE.Plane[],
+): THREE.MeshStandardMaterial {
   return new THREE.MeshStandardMaterial({
     roughness: 0.65,
     metalness: 0,
@@ -39,18 +43,25 @@ function buildHerringboneGeometry(
   plankL: number,
   plankW: number,
   gap: number,
-  clippingPlanes: THREE.Plane[]
+  clippingPlanes: THREE.Plane[],
 ): THREE.InstancedMesh {
   const gapM = gap / 1000;
-  const blockSize = plankL;
-  const planksPerBlock = Math.max(1, Math.round(plankL / (plankW + gapM)));
+  const planksPerBlock = Math.max(
+    1,
+    Math.floor((plankL + gapM) / (plankW + gapM)),
+  );
+  const blockSize = planksPerBlock * (plankW + gapM) - gapM;
 
   const numBlocksX = Math.ceil(roomL / blockSize) + 2;
   const numBlocksZ = Math.ceil(roomW / blockSize) + 2;
   const maxInstances = numBlocksX * numBlocksZ * planksPerBlock;
 
   const geometry = new THREE.BoxGeometry(plankL, 0.018, plankW);
-  const mesh = new THREE.InstancedMesh(geometry, makeMaterial(clippingPlanes), maxInstances);
+  const mesh = new THREE.InstancedMesh(
+    geometry,
+    makeMaterial(clippingPlanes),
+    maxInstances,
+  );
   mesh.castShadow = true;
   mesh.receiveShadow = true;
 
@@ -67,10 +78,18 @@ function buildHerringboneGeometry(
         const offset = p * (plankW + gapM);
 
         if (isHorizontal) {
-          dummy.position.set(originX + plankL / 2, 0.009, originZ + offset + plankW / 2);
+          dummy.position.set(
+            originX + plankL / 2,
+            0.009,
+            originZ + offset + plankW / 2,
+          );
           dummy.rotation.set(0, 0, 0);
         } else {
-          dummy.position.set(originX + offset + plankW / 2, 0.009, originZ + plankL / 2);
+          dummy.position.set(
+            originX + offset + plankW / 2,
+            0.009,
+            originZ + plankL / 2,
+          );
           dummy.rotation.set(0, Math.PI / 2, 0);
         }
 
@@ -94,7 +113,7 @@ function buildStraightGeometry(
   plankL: number,
   plankW: number,
   gap: number,
-  clippingPlanes: THREE.Plane[]
+  clippingPlanes: THREE.Plane[],
 ): THREE.InstancedMesh {
   const gapM = gap / 1000;
   const stepX = plankW + gapM;
@@ -105,18 +124,21 @@ function buildStraightGeometry(
   const maxInstances = cols * rows;
 
   const geometry = new THREE.BoxGeometry(plankW, 0.018, plankL);
-  const mesh = new THREE.InstancedMesh(geometry, makeMaterial(clippingPlanes), maxInstances);
+  const mesh = new THREE.InstancedMesh(
+    geometry,
+    makeMaterial(clippingPlanes),
+    maxInstances,
+  );
   mesh.castShadow = true;
   mesh.receiveShadow = true;
 
   const dummy = new THREE.Object3D();
   let idx = 0;
 
-  for (let row = -1; row < rows; row++) {
-    const stagger = row % 2 === 0 ? 0 : plankL / 2;
-    for (let col = -1; col < cols; col++) {
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
       const x = -roomL / 2 + col * stepX + plankW / 2;
-      const z = -roomW / 2 + row * stepZ + plankL / 2 + stagger;
+      const z = -roomW / 2 + row * stepZ + plankL / 2;
       dummy.position.set(x, 0.009, z);
       dummy.rotation.set(0, 0, 0);
       dummy.updateMatrix();
@@ -132,7 +154,12 @@ function buildStraightGeometry(
   return mesh;
 }
 
-export default function Floor({ roomLength, roomWidth, plank, layoutType }: FloorProps) {
+export default function Floor({
+  roomLength,
+  roomWidth,
+  plank,
+  layoutType,
+}: FloorProps) {
   const { gl } = useThree();
   const plankLm = plank.length / 1000;
   const plankWm = plank.width / 1000;
@@ -143,15 +170,37 @@ export default function Floor({ roomLength, roomWidth, plank, layoutType }: Floo
 
   const clippingPlanes = useMemo(
     () => makeClippingPlanes(roomLength, roomWidth),
-    [roomLength, roomWidth]
+    [roomLength, roomWidth],
   );
 
   const instancedMesh = useMemo(() => {
-    if (layoutType === 'herringbone') {
-      return buildHerringboneGeometry(roomLength, roomWidth, plankLm, plankWm, plank.gap, clippingPlanes);
+    if (layoutType === "herringbone") {
+      return buildHerringboneGeometry(
+        roomLength,
+        roomWidth,
+        plankLm,
+        plankWm,
+        plank.gap,
+        clippingPlanes,
+      );
     }
-    return buildStraightGeometry(roomLength, roomWidth, plankLm, plankWm, plank.gap, clippingPlanes);
-  }, [roomLength, roomWidth, plankLm, plankWm, plank.gap, layoutType, clippingPlanes]);
+    return buildStraightGeometry(
+      roomLength,
+      roomWidth,
+      plankLm,
+      plankWm,
+      plank.gap,
+      clippingPlanes,
+    );
+  }, [
+    roomLength,
+    roomWidth,
+    plankLm,
+    plankWm,
+    plank.gap,
+    layoutType,
+    clippingPlanes,
+  ]);
 
   return <primitive object={instancedMesh} />;
 }
